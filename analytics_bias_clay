@@ -1,0 +1,106 @@
+library("data.table")
+
+setwd("C:\\Users\\lillcam\\Documents\\beta_clay_corrected_LIX")
+source("BHPplots_julio_2020.R")
+
+data = fread("MATFIN_DIST.csv")
+data = as.data.frame(data)
+
+data2 = fread("Pozos y sus NIR_30-05-2022.csv")
+data2 = as.data.frame(data2)
+
+data3 = data.frame(
+SAMPLEID = data2$SAMPLEID,
+NIR_Equipo = data2$NIR_Equipo,
+NIR_FechaLectura = data2$NIR_FechaLectura)
+
+data = merge(data, data3, 
+             by.x = "id_pt", by.y = "SAMPLEID",
+             all.x = TRUE, all.y = FALSE)
+
+data$bias_neto = data$bclay_pt - data$clay_beta_son
+
+
+
+data$nir_eq = paste("eqpt_", data$NIR_Equipo, "_eqson", data$nir_equipo_son, sep = "")
+
+
+BHP.NPplot(data$bias_neto, cat = data$nir_eq, tolsample = 100)
+
+data2 = data[data$dist < 10,]
+
+fwrite(data2, "data_bias_clay_nir.csv")
+
+
+BHP.EDA(data2$bias_neto[(abs(data2$bias_neto) < 20)&(data2$mes_extraccion_pt > 202004)], 
+        cat = data2$nir_eq[(abs(data2$bias_neto) < 20)&(data2$mes_extraccion_pt > 202004)], tolsample = 200)
+
+
+
+data = data[abs(data$bias_neto) <= 20,]
+
+BHP.hist(data$bias_neto, vo = -20, r = 1)
+
+BHP.hist(data$bias_neto[data$dist <= 10], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  9], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  8], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  7], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  6], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  5], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  4], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  3], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  2], vo = -20, r = 1, xmin = -20, xmax = 20)
+BHP.hist(data$bias_neto[data$dist <=  1], vo = -20, r = 1, xmin = -20, xmax = 20)
+
+BHP.statplot2(data$bias_neto, cat = data.frame(alte = data$alte_son, 
+                                               lito = data$lito_son,
+                                               minty = data$minty_son, 
+                                               dom = data$dom_son), 
+              tolsample = 400)
+
+
+BHP.NPplot(data$bias_neto[data$clay_beta_son <= 30], cat = data$alte_son[data$clay_beta_son <= 30])
+BHP.NPplot(data$bias_neto[data$clay_beta_son <= 30], cat = data$lito_son[data$clay_beta_son <= 30])
+BHP.NPplot(data$bias_neto[data$clay_beta_son <= 30], cat = data$minty_son[data$clay_beta_son <= 30])
+BHP.NPplot(data$bias_neto[data$clay_beta_son <= 30], cat = data$dom_son[data$clay_beta_son <= 30])
+
+summary(data$bclay_pt)
+
+
+
+BHP.scatter(data$clay_beta_son, data$bias_neto, cat = data$minty_son,
+            xmax = 30)
+
+
+lm(data$bias_neto ~ data$clay_beta_son)
+
+lm(data$bias_neto[data$clay_beta_son <= 20] ~ data$clay_beta_son[data$clay_beta_son <= 20])
+
+
+
+data$bclay_pt2 = 2.78 + data$bclay_pt * 0.7093
+
+data$bias2 = data$bclay_pt2 - data$clay_beta_son
+
+
+hist(data$bias2)
+
+
+library("tidyverse")
+
+
+
+data2 = as_tibble(data)
+
+data2 %>% group_by(mes_extraccion_pt) %>%
+  summarise(bias1 = mean(bias_neto, na.rm = TRUE),
+            bias2 = mean(bias2, na.rm = TRUE)) %>% 
+  print(n = 100)
+
+
+BHP.scatter(data$clay_beta_md_son, data$bias_neto,
+            cat = substr(data$mes_extraccion_pt, 1, 4))
+
+
+
+data$
